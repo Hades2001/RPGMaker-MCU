@@ -25,6 +25,7 @@ public:
 
 private:
     mappack_t *_map;
+    QPixmap BkPix,LayerIcon;
     QPixmap pixmap[3];
     QPoint mousePos;
     QRect _Rect,_DrawRect;
@@ -35,6 +36,7 @@ private:
     QPoint _pressPoint = QPoint(0,0);
     QStringList _mapList;
     int _mapLayer = 0;
+    int _mapnumber = 0;
 
 protected:
     void mousePressEvent(QMouseEvent* e);

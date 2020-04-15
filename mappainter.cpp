@@ -11,9 +11,17 @@ MapPainter::MapPainter(QWidget *parent) :
     mapPainterWidget *lab = new mapPainterWidget(this,_mapptr);
     ui->sA_mapPainter->setWidget(lab);
 
-    connect(ui->Bn_Layer1,&QPushButton::pressed,[=]{lab->setmapLayer(1);});
-    connect(ui->Bn_Layer2,&QPushButton::pressed,[=]{lab->setmapLayer(2);});
-    connect(ui->Bn_Layer3,&QPushButton::pressed,[=]{lab->setmapLayer(3);});
+    QButtonGroup *layerButtonGroup = new QButtonGroup();
+    layerButtonGroup->addButton(ui->Bn_Layer1);
+    layerButtonGroup->addButton(ui->Bn_Layer2);
+    layerButtonGroup->addButton(ui->Bn_Layer3);
+    layerButtonGroup->addButton(ui->Bn_Browse);
+    layerButtonGroup->setExclusive(true);
+
+    connect(ui->Bn_Layer1,&QPushButton::pressed,[=]{lab->setmapLayer(0);});
+    connect(ui->Bn_Layer2,&QPushButton::pressed,[=]{lab->setmapLayer(1);});
+    connect(ui->Bn_Layer3,&QPushButton::pressed,[=]{lab->setmapLayer(2);});
+    connect(ui->Bn_Browse,&QPushButton::pressed,[=]{lab->setmapLayer(-1);});
 
     connect(lab,&mapPainterWidget::MouseMove,[=](QPoint p){
         Q_UNUSED(p);
@@ -22,8 +30,28 @@ MapPainter::MapPainter(QWidget *parent) :
 
     ui->tabWidget->clear();
     QStringList mapfilepath;
+    for( int i = 0; i < 8 ; i++ )
+    {
+        if( mapgroupbuff[0][i] != -1 )
+        {
+            QString apppath = QApplication::applicationDirPath();
+            apppath.append("/img/tilesets/" + mapimage.at(mapgroupbuff[2][i]));
+            mapfilepath.append(apppath);
+
+            _maplib[i] = new maplibwidget(this,i,apppath);
+            _maplab[i] = new QScrollArea;
+            _maplab[i]->setWidget(_maplib[i]);
+            ui->tabWidget->addTab(_maplab[i],QString("%1").arg(i));
+
+            connect( _maplib[i],&maplibwidget::ChooseRect,[=](int n,QRect r){
+                lab->setPainterImage(n,r);
+            });
+        }
+    }
+    /*
     for( int i = 0; i < mapimage.size(); i++ )
     {
+
         QString apppath = QApplication::applicationDirPath();
         apppath.append("/img/tilesets/" + mapimage.at(i));
         qDebug()<<apppath;
@@ -37,7 +65,7 @@ MapPainter::MapPainter(QWidget *parent) :
             lab->setPainterImage(n,r);
         });
     }
-
+    */
     lab->setMapImageList(mapfilepath);
 }
 
@@ -151,9 +179,6 @@ void MapPainter::on_Bn_Generated_pressed()
     headFileStr.append( "   #ifndef MAPPACKLIB_H\n\
                             #define MAPPACKLIB_H\n");
 
-    ///Users/chaoxuanzhe/qt/GameTools/GameTools/mappainter.cpp:152: warning: macro name is a reserved identifier
-    //headFileStr
-
     for( int i = 0; i < imageList.size(); i++ )
     {
         QImage *img = new QImage();
@@ -170,7 +195,7 @@ void MapPainter::on_Bn_Generated_pressed()
         //qDebug()<<imageList.at(i)<<name<<QString("%1,%2").arg(countx).arg(county);
 
         QString binfile;
-
+        QString filestr;
 
         headFileStr.append(QString("extern const uint8_t map_")
                            + name
@@ -178,15 +203,16 @@ void MapPainter::on_Bn_Generated_pressed()
 
         mapList.append(QString("map_") + name + "data,\n");
 
-        binfile.append("#include \"mappacklib.h\"\n");
+        filestr.append("#include \"mappacklib.h\"\n");
         binfile.append(QString("const uint8_t map_") + name + QString("data[%1][%2]").arg(countx*county).arg(24*24*2));
         binfile.append(QString("={ \n"));
 
-        int *colorUserBuff = new int[65536];
-        for( int t = 0; t < 65536; t++ )
-        {
-            colorUserBuff[i] = 0;
-        }
+        //quint16 *colorUserBuff = new quint16[65536];
+        quint8 index = 1, colorindex = 1;
+        quint16 colorIndexbuff[256];
+        for( int t = 0; t < 256; t++ ){ colorIndexbuff[t] = 0; }
+        quint16 colorUserBuff[65536];
+        for( int t = 0; t < 65536; t++ ){ colorUserBuff[t] = 0; }
 
         for(int posy = 0; posy < county; posy++ )
         {
@@ -196,35 +222,69 @@ void MapPainter::on_Bn_Generated_pressed()
                 for(int i = 0; i < 576; i++ )
                 {
                    quint16 color = quint16(TORGB565(img->pixelColor(posx * 24 + i % 24, posy * 24 + i / 24).rgb()));
-                   colorUserBuff[color] = 1;
 
+                   if( colorUserBuff[color] == 0 )
+                   {
+                       colorUserBuff[color] = index;
+                       colorIndexbuff[index] = color;
+                       colorindex = index;
+                       index++;
+                   }
+                   else
+                   {
+                       colorindex = quint8(colorUserBuff[color]);
+                   }
+                   binfile.append(QString("0x%1, ").arg(colorindex & 0x00ff , 2, 16, QLatin1Char('0')));
+                   /*
                    binfile.append(QString("0x%1, ").arg(color >> 8, 2, 16, QLatin1Char('0')));
-                   binfile.append(QString("0x%1, ").arg(color % 0xff, 2, 16, QLatin1Char('0')));
+                   binfile.append(QString("0x%1, ").arg(color & 0xff, 2, 16, QLatin1Char('0')));
+                   */
                    if(( i != 0 )&&( i % 24 == 23 ))binfile.append(" \n");
                 }
                 binfile.append("}, \n");
             }
         }
         binfile.append("}; \n");
+        int color_count = 0;
 
         for( int t = 0; t < 65536; t++ )
         {
-            if(colorUserBuff[i] == 0)
+            if( colorUserBuff[t] == 0 )
             {
-                binfile.append(QString("//uint16_t Transparent = %1; \n").arg(t));
+                colorIndexbuff[0] = quint16(t);
                 break;
             }
         }
+
+        for( int t = 0; t < 65536; t++ )
+        {
+            if( colorUserBuff[t] != 0 )
+                color_count++;
+        }
+        qDebug()<<QString("%1").arg(color_count);
+
+        QString indexStr;
+        indexStr.append("uint16_t " + name + "_index[256]={\n");
+        for( int t = 0; t < 256; t++ )
+        {
+            quint16 color = colorIndexbuff[t];
+            indexStr.append(QString("0x%1, ").arg(color >> 8, 2, 16, QLatin1Char('0')));
+            indexStr.append(QString("0x%1, ").arg(color & 0xff, 2, 16, QLatin1Char('0')));
+        }
+        indexStr.append("\n};\n");
+
+        filestr.append(binfile);
+        filestr.append(indexStr);
 
         QString Generate = path +'/' + name + ".c";
         //qDebug()<<Generate;
         QFile file(Generate);
 
         file.open(QFile::WriteOnly);
-        file.write(binfile.toLatin1());
+        file.write(filestr.toLatin1());
         file.close();
 
-        delete[] colorUserBuff;
+        //delete[] colorUserBuff;
         delete img;
     }
 

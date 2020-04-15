@@ -168,8 +168,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>683</width>
-           <height>432</height>
+           <width>691</width>
+           <height>434</height>
           </rect>
          </property>
         </widget>
@@ -219,8 +219,26 @@
              <height>60</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{
+	image: url(:/icon/img/layers_0002.png);
+	color: rgb(255, 255, 255);
+	background-color: transparent;
+	border:transparent;
+	padding:7px;
+}
+QPushButton:checked{
+	background-color: rgb(182, 182, 182);
+}</string>
+           </property>
            <property name="text">
-            <string>L1</string>
+            <string/>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -244,8 +262,23 @@
              <height>60</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{
+	image: url(:/icon/img/layers_0001.png);
+	color: rgb(255, 255, 255);
+	background-color: transparent;
+	border:transparent;
+	padding:7px;
+}
+QPushButton:checked{
+	background-color: rgb(182, 182, 182);
+}</string>
+           </property>
            <property name="text">
-            <string>L2</string>
+            <string/>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -269,13 +302,28 @@
              <height>60</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{
+	image: url(:/icon/img/layers_0000.png);
+	color: rgb(255, 255, 255);
+	background-color: transparent;
+	border:transparent;
+	padding:7px;
+}
+QPushButton:checked{
+	background-color: rgb(182, 182, 182);
+}</string>
+           </property>
            <property name="text">
-            <string>L3</string>
+            <string/>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_5">
+          <widget class="QPushButton" name="Bn_Browse">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -294,8 +342,27 @@
              <height>60</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton{
+	image: url(:/icon/img/Browse.png);
+	color: rgb(255, 255, 255);
+	background-color: transparent;
+	border:transparent;
+	padding:7px;
+}
+QPushButton:checked{
+	background-color: rgb(182, 182, 182);
+}
+</string>
+           </property>
            <property name="text">
-            <string>PushButton</string>
+            <string/>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -430,6 +497,9 @@
           <width>70</width>
           <height>70</height>
          </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>PushButton</string>

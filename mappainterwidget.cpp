@@ -6,12 +6,32 @@ mapPainterWidget::mapPainterWidget(QWidget *parent,mappack_t* map) : QWidget(par
     if( map == nullptr ) return;
     _map = map;
 
+    BkPix = QPixmap(map->size_w * 24,map->size_h * 24);
+    BkPix.fill(Qt::white);
+    QPainter painter(&BkPix);
+    for( int posy = 0; posy < map->size_h * 2 ; posy++ )
+    {
+        for( int posx = 0; posx < map->size_w * 2 ; posx++ )
+        {
+            painter.setPen(QColor(Qt::transparent));
+            painter.setBrush(QColor(200,200,200));
+            if(( posx + ( posy % 2 )) % 2 == 0 )
+            {
+                painter.drawRect(posx*12,posy*12,12,12);
+            }
+        }
+    }
+    painter.end();
+
+    LayerIcon.load(":/icon/img/layers_0000.png");
+    LayerIcon = LayerIcon.scaled(64,64);
+
     pixmap[0] = QPixmap(map->size_w * 24,map->size_h * 24);
-    pixmap[0].fill(Qt::white);
+    pixmap[0].fill(Qt::transparent);
     pixmap[1] = QPixmap(map->size_w * 24,map->size_h * 24);
-    pixmap[1].fill(Qt::white);
+    pixmap[1].fill(Qt::transparent);
     pixmap[2] = QPixmap(map->size_w * 24,map->size_h * 24);
-    pixmap[2].fill(Qt::white);
+    pixmap[2].fill(Qt::transparent);
     this->resize(map->size_w * 24,map->size_h * 24);
     this->setMinimumSize(map->size_w * 24,map->size_h * 24);
     _Rect = QRect(0,0,24,24);
@@ -39,6 +59,15 @@ void mapPainterWidget::setPainterImage(int number,QRect r)
 void mapPainterWidget::setmapLayer(int layer)
 {
     _mapLayer = layer;
+
+    switch (_mapLayer) {
+        case 0 : LayerIcon.load(":/icon/img/layers_0002.png");break;
+        case 1 : LayerIcon.load(":/icon/img/layers_0001.png");break;
+        case 2 : LayerIcon.load(":/icon/img/layers_0000.png");break;
+        default: LayerIcon.load(":/icon/img/layers_0000.png");break;
+    }
+    LayerIcon = LayerIcon.scaled(64,64);
+    this->update();
 }
 
 QImage mapPainterWidget::reSetImageOffset(int offsetX,int offsetY)
@@ -61,6 +90,8 @@ QImage mapPainterWidget::reSetImageOffset(int offsetX,int offsetY)
 void mapPainterWidget::writemapData(int posx, int posy, int offsetx, int offsety)
 {
     uint16_t **layer = nullptr;
+
+    if( _mapLayer == -1 ) return;
 
     switch (_mapLayer) {
         case 0: layer = _map->maplayer0;break;
@@ -90,7 +121,6 @@ void mapPainterWidget::writemapData(int posx, int posy, int offsetx, int offsety
 
         for (int x = 0; x < pack_w; x++) {
             mapdata[y][x] = uint16_t(image_w * ( y + (_Rect.y() / 24)) + ( x + (_Rect.x() / 24)));
-            qDebug() <<  mapdata[y][x];
         }
     }
 
@@ -99,7 +129,10 @@ void mapPainterWidget::writemapData(int posx, int posy, int offsetx, int offsety
 
     for (int y = 0; y < pack_h; y++ ) {
         for (int x = 0; x < pack_w; x++) {
+            if(( posy + y < 0 )||( posx + x < 0 )||( posx + x >= _map->size_w)||( posy + y >= _map->size_h)) continue;
             layer[posy + y][posx + x] = mapdata[( y + offsety ) % pack_h][( x + offsetx ) % pack_w];
+            layer[posy + y][posx + x] |= 0x8000;
+            layer[posy + y][posx + x] |= ( _mapnumber & 0x7 ) << 12;
         }
     }
     for (int y = 0; y < pack_h; y++ ) {
@@ -112,9 +145,11 @@ void mapPainterWidget::mousePressEvent(QMouseEvent* e)
 {
     Q_UNUSED(e);
     mousePos = e->pos();
+    if( _mapLayer == -1 ) return;
+
     if( e->button() == Qt::LeftButton )
     {
-        QPainter painter(&pixmap[0]);
+        QPainter painter(&pixmap[_mapLayer]);
         int rectx0 = mousePos.x()  - mousePos.x() % 24;
         int recty0 = mousePos.y()  - mousePos.y() % 24;
         painter.drawImage(rectx0,recty0,_Image);
@@ -133,7 +168,7 @@ void mapPainterWidget::mousePressEvent(QMouseEvent* e)
     }
     if( e->button() == Qt::RightButton )
     {
-        pixmap[_mapLayer].fill(Qt::white);
+        pixmap[_mapLayer].fill(Qt::transparent);
         this->update();
     }
 }
@@ -142,6 +177,8 @@ void mapPainterWidget::mouseMoveEvent(QMouseEvent* e)
 {
     Q_UNUSED(e);
     mousePos = e->pos();
+    if( _mapLayer == -1 ) return;
+
     if( _isPress )
     {
         if(( qAbs( mousePos.x() - _drawPoint.x()) >= 24 )||\
@@ -154,6 +191,7 @@ void mapPainterWidget::mouseMoveEvent(QMouseEvent* e)
                               recty0,
                               reSetImageOffset(rectx0 - _pressPoint.x(),
                                                recty0 - _pressPoint.y()));
+
             writemapData(rectx0,
                          recty0,
                          rectx0 - _pressPoint.x(),
@@ -176,13 +214,15 @@ void mapPainterWidget::mouseMoveEvent(QMouseEvent* e)
 void mapPainterWidget::mouseReleaseEvent(QMouseEvent* e)
 {
     Q_UNUSED(e);
+    if( _mapLayer == -1 ) return;
+
     if( e->button() == Qt::LeftButton )
     {
         _isPress = false;
     }
     if( e->button() == Qt::RightButton )
     {
-        pixmap[0].fill(Qt::white);
+        pixmap[_mapLayer].fill(Qt::transparent);
     }
 }
 void mapPainterWidget::paintEvent(QPaintEvent *event)
@@ -190,23 +230,34 @@ void mapPainterWidget::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
     QPainter painter(this);
 
-    painter.drawPixmap(0,0,pixmap[0]);
-    //painter.drawPixmap(0,0,pixmap[1]);
-    //painter.drawPixmap(0,0,pixmap[2]);
+    painter.drawPixmap(0,0,BkPix);
 
-    QPen painterPen(QColor(0,0,128),2);
-    painter.setPen(painterPen);
+    for( int i = 0; i < 3; i++ )
+    {
+        if(( _mapLayer != i )&&( _mapLayer != -1 )) painter.setOpacity(0.5);
+        painter.drawPixmap(0,0,pixmap[i]);
+        painter.setOpacity(1);
+    }
 
-    int x0 = (( mousePos.x() - 5 ) < 0 ) ? 0 :  mousePos.x() - 5;
-    int y0 = (( mousePos.y() - 5 ) < 0 ) ? 0 :  mousePos.y() - 5;
-    int x1 = (( mousePos.x() + 5 ) > this->width()) ? this->width() :  mousePos.x() + 5;
-    int y1 = (( mousePos.y() + 5 ) > this->height()) ? this->height() :  mousePos.y() + 5;
-    painter.drawLine(x0,mousePos.y(),x1,mousePos.y());
-    painter.drawLine(mousePos.x(),y0,mousePos.x(),y1);
+    if( _mapLayer != -1 )
+    {
+        QPen painterPen(QColor(0,0,128),2);
+        painter.setPen(painterPen);
 
-    int rectx0 = mousePos.x()  - mousePos.x() % 24;
-    int recty0 = mousePos.y()  - mousePos.y() % 24;
-    painter.drawRect(rectx0, recty0, _Rect.width(), _Rect.height());
-    _DrawRect = QRect(rectx0,recty0,_Rect.width(),_Rect.height());
-    //painter.drawImage()
+        int x0 = (( mousePos.x() - 5 ) < 0 ) ? 0 :  mousePos.x() - 5;
+        int y0 = (( mousePos.y() - 5 ) < 0 ) ? 0 :  mousePos.y() - 5;
+        int x1 = (( mousePos.x() + 5 ) > this->width()) ? this->width() :  mousePos.x() + 5;
+        int y1 = (( mousePos.y() + 5 ) > this->height()) ? this->height() :  mousePos.y() + 5;
+        painter.drawLine(x0,mousePos.y(),x1,mousePos.y());
+        painter.drawLine(mousePos.x(),y0,mousePos.x(),y1);
+
+        int rectx0 = mousePos.x()  - mousePos.x() % 24;
+        int recty0 = mousePos.y()  - mousePos.y() % 24;
+        painter.drawRect(rectx0, recty0, _Rect.width(), _Rect.height());
+        _DrawRect = QRect(rectx0,recty0,_Rect.width(),_Rect.height());
+
+        painter.setOpacity(0.5);
+        painter.drawPixmap(20,20,LayerIcon);
+        painter.setOpacity(1);
+    }
 }

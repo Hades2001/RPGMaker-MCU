@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file>img/layers_0000.png</file>
+        <file>img/layers_0001.png</file>
+        <file>img/layers_0002.png</file>
+        <file>img/Browse.png</file>
+    </qresource>
+</RCC>

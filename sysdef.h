@@ -6,6 +6,7 @@
 
 typedef struct mappack{
     QString name;
+    int Group;
     int size_w;
     int size_h;
     uint16_t **maplayer0;
@@ -14,7 +15,7 @@ typedef struct mappack{
     QImage mapimage;
 }mappack_t;
 
-//[15:13][12][11][10][9:0]
+//[15][14:12][11][10][9:0]
 
 
 #define TORGB565(color) ((((color) >> 19) & 0x1f) << 11) \
