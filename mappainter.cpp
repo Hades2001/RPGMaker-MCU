@@ -199,16 +199,16 @@ void MapPainter::on_Bn_Generated_pressed()
 
         headFileStr.append(QString("extern const uint8_t map_")
                            + name
-                           + QString("data[%1][%2];\n").arg(countx*county).arg(24*24*2));
+                           + QString("data[%1][%2];\n").arg(countx*county).arg(24*24));
 
         mapList.append(QString("map_") + name + "data,\n");
 
         filestr.append("#include \"mappacklib.h\"\n");
-        binfile.append(QString("const uint8_t map_") + name + QString("data[%1][%2]").arg(countx*county).arg(24*24*2));
+        binfile.append(QString("const uint8_t map_") + name + QString("data[%1][%2]").arg(countx*county).arg(24*24));
         binfile.append(QString("={ \n"));
 
         //quint16 *colorUserBuff = new quint16[65536];
-        quint8 index = 1, colorindex = 1;
+        quint8 index = 0, colorindex = 1;
         quint16 colorIndexbuff[256];
         for( int t = 0; t < 256; t++ ){ colorIndexbuff[t] = 0; }
         quint16 colorUserBuff[65536];
@@ -235,10 +235,6 @@ void MapPainter::on_Bn_Generated_pressed()
                        colorindex = quint8(colorUserBuff[color]);
                    }
                    binfile.append(QString("0x%1, ").arg(colorindex & 0x00ff , 2, 16, QLatin1Char('0')));
-                   /*
-                   binfile.append(QString("0x%1, ").arg(color >> 8, 2, 16, QLatin1Char('0')));
-                   binfile.append(QString("0x%1, ").arg(color & 0xff, 2, 16, QLatin1Char('0')));
-                   */
                    if(( i != 0 )&&( i % 24 == 23 ))binfile.append(" \n");
                 }
                 binfile.append("}, \n");
@@ -249,15 +245,6 @@ void MapPainter::on_Bn_Generated_pressed()
 
         for( int t = 0; t < 65536; t++ )
         {
-            if( colorUserBuff[t] == 0 )
-            {
-                colorIndexbuff[0] = quint16(t);
-                break;
-            }
-        }
-
-        for( int t = 0; t < 65536; t++ )
-        {
             if( colorUserBuff[t] != 0 )
                 color_count++;
         }
@@ -265,16 +252,18 @@ void MapPainter::on_Bn_Generated_pressed()
 
         QString indexStr;
         indexStr.append("uint16_t " + name + "_index[256]={\n");
+
         for( int t = 0; t < 256; t++ )
         {
             quint16 color = colorIndexbuff[t];
             indexStr.append(QString("0x%1, ").arg(color >> 8, 2, 16, QLatin1Char('0')));
             indexStr.append(QString("0x%1, ").arg(color & 0xff, 2, 16, QLatin1Char('0')));
+            if(( t != 0 )&&( t % 16 == 15 )) indexStr.append("\n");
         }
         indexStr.append("\n};\n");
 
-        filestr.append(binfile);
         filestr.append(indexStr);
+        filestr.append(binfile);
 
         QString Generate = path +'/' + name + ".c";
         //qDebug()<<Generate;
@@ -290,7 +279,7 @@ void MapPainter::on_Bn_Generated_pressed()
 
     mapList.append("};\n*/");
     headFileStr.append(mapList);
-    headFileStr.append("#endif\n");
+    headFileStr.append("\n#endif\n");
 
     QString Generate = path +'/' + "mappacklib.h";
     QFile file(Generate);
