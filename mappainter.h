@@ -54,29 +54,16 @@ private:
         "Outside_B.png",//17 ---group 2-5
         "Outside_C.png",//18 ---group 2-6
 
-        "SF_Inside_A4.png",//19 ---group 3-0
-        "SF_Inside_B.png",//20  ---group 3-1
-        "SF_Inside_C.png",//21  ---group 3-2
-
-        "SF_Outside_A3.png",//22---group 4-0
-        "SF_Outside_A4.png",//23---group 4-1
-        "SF_Outside_A5.png",//24---group 4-2
-        "SF_Outside_B.png",//25 ---group 4-3
-        "SF_Outside_C.png",//26 ---group 4-4
-
-        "World_A1.png",//27     ---group 5-0
-        "World_A2.png",//28     ---group 5-1
-        "World_B.png",//29      ---group 5-2
-        "World_C.png",//30      ---group 5-3
+        "World_A1.png",//19     ---group 3-0
+        "World_A2.png",//20     ---group 3-1
+        "World_B.png",//21      ---group 3-2
     };
 
-    int mapgroupbuff[6][8]={
+    int mapgroupbuff[4][8]={
         { 0 , 1 , 2 , 3 , 4 , 5 , -1, -1 },
         { 6 , 7 , 8 , 9 , 10, 11, -1, -1 },
         { 12, 13, 14, 15, 16, 17, 18, -1 },
-        { 19, 20, 21, -1, -1, -1, -1, -1 },
-        { 22, 23, 24, 25, 26, -1, -1, -1 },
-        { 27, 28, 29, 30, -1, -1, -1, -1 },
+        { 19, 20, 21, 22, -1, -1, -1, -1 },
     };
 
 private:

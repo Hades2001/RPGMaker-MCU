@@ -174,7 +174,7 @@ void MapPainter::on_Bn_Generated_pressed()
 
     if( imageList.isEmpty()) return;
 
-    QString headFileStr,mapList;
+    QString headFileStr,mapList,indexList;
     mapList.append("/* \nuint8_t **mapLibList = {\n");
     headFileStr.append( "   #ifndef MAPPACKLIB_H\n\
                             #define MAPPACKLIB_H\n");
@@ -225,14 +225,14 @@ void MapPainter::on_Bn_Generated_pressed()
 
                    if( colorUserBuff[color] == 0 )
                    {
-                       colorUserBuff[color] = index;
+                       colorUserBuff[color] = ( index + 1 );
                        colorIndexbuff[index] = color;
                        colorindex = index;
                        index++;
                    }
                    else
                    {
-                       colorindex = quint8(colorUserBuff[color]);
+                       colorindex = quint8(colorUserBuff[color] - 1);
                    }
                    binfile.append(QString("0x%1, ").arg(colorindex & 0x00ff , 2, 16, QLatin1Char('0')));
                    if(( i != 0 )&&( i % 24 == 23 ))binfile.append(" \n");
@@ -251,13 +251,12 @@ void MapPainter::on_Bn_Generated_pressed()
         qDebug()<<QString("%1").arg(color_count);
 
         QString indexStr;
-        indexStr.append("uint16_t " + name + "_index[256]={\n");
-
+        indexList.append("extern const uint16_t " + name + "_index[256];");
+        indexStr.append("const uint16_t " + name + "_index[256]={\n");
         for( int t = 0; t < 256; t++ )
         {
             quint16 color = colorIndexbuff[t];
-            indexStr.append(QString("0x%1, ").arg(color >> 8, 2, 16, QLatin1Char('0')));
-            indexStr.append(QString("0x%1, ").arg(color & 0xff, 2, 16, QLatin1Char('0')));
+            indexStr.append(QString("0x%1, ").arg(color & 0xffff, 4, 16, QLatin1Char('0')));
             if(( t != 0 )&&( t % 16 == 15 )) indexStr.append("\n");
         }
         indexStr.append("\n};\n");
@@ -278,6 +277,7 @@ void MapPainter::on_Bn_Generated_pressed()
     }
 
     mapList.append("};\n*/");
+    headFileStr.append(indexList);
     headFileStr.append(mapList);
     headFileStr.append("\n#endif\n");
 
