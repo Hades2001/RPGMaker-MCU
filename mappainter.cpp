@@ -179,6 +179,13 @@ void MapPainter::on_Bn_Generated_pressed()
     headFileStr.append( "   #ifndef MAPPACKLIB_H\n\
                             #define MAPPACKLIB_H\n");
 
+    QByteArray binfiledata;
+    QString binHeadfilestr,binCfilestr;
+    QString addrListstr,indexbuffList;
+    quint64 addr = 0;
+    indexbuffList.append(QString("uint16_t indexList[%1]={\n").arg(imageList.size()));
+    addrListstr.append(QString("uint64_t addrList[%1]={\n").arg(imageList.size()));
+
     for( int i = 0; i < imageList.size(); i++ )
     {
         QImage *img = new QImage();
@@ -234,6 +241,8 @@ void MapPainter::on_Bn_Generated_pressed()
                    {
                        colorindex = quint8(colorUserBuff[color] - 1);
                    }
+
+                   binfiledata.append(char(colorindex));
                    binfile.append(QString("0x%1, ").arg(colorindex & 0x00ff , 2, 16, QLatin1Char('0')));
                    if(( i != 0 )&&( i % 24 == 23 ))binfile.append(" \n");
                 }
@@ -251,7 +260,7 @@ void MapPainter::on_Bn_Generated_pressed()
         qDebug()<<QString("%1").arg(color_count);
 
         QString indexStr;
-        indexList.append("extern const uint16_t " + name + "_index[256];");
+        indexList.append("extern const uint16_t " + name + "_index[256];\n");
         indexStr.append("const uint16_t " + name + "_index[256]={\n");
         for( int t = 0; t < 256; t++ )
         {
@@ -265,18 +274,22 @@ void MapPainter::on_Bn_Generated_pressed()
         filestr.append(binfile);
 
         QString Generate = path +'/' + name + ".c";
-        //qDebug()<<Generate;
         QFile file(Generate);
 
         file.open(QFile::WriteOnly);
         file.write(filestr.toLatin1());
         file.close();
 
-        //delete[] colorUserBuff;
+        binHeadfilestr.append("extern const uint16_t " + name + "_index[256];\n");
+        indexbuffList.append("(uint16_t *) " + name + "_index, \n");
+        binCfilestr.append(indexStr);
+        addrListstr.append(QString("0x%1,\n").arg(addr,16,16,QLatin1Char('0')));
+        addr += quint64(county * countx * 24 * 24);
         delete img;
     }
-
-    mapList.append("};\n*/");
+    indexbuffList.append("};\n");
+    addrListstr.append("};\n");
+    mapList.append("};\n */");
     headFileStr.append(indexList);
     headFileStr.append(mapList);
     headFileStr.append("\n#endif\n");
@@ -286,4 +299,27 @@ void MapPainter::on_Bn_Generated_pressed()
     file.open(QFile::WriteOnly);
     file.write(headFileStr.toLatin1());
     file.close();
+
+    QString GenerateBinfile = path + '/' + "mappackfile.bin";
+    QFile binfile(GenerateBinfile);
+    binfile.open(QFile::WriteOnly);
+    binfile.write(binfiledata);
+    binfile.close();
+
+    binCfilestr.append(addrListstr);
+    binCfilestr.append(indexbuffList);
+
+
+    QString GenerateBinHfile = path + '/' + "mappackfile.h";
+    QFile binHfile(GenerateBinHfile);
+    binHfile.open(QFile::WriteOnly);
+    binHfile.write(binHeadfilestr.toLatin1());
+    binHfile.close();
+
+    QString GenerateBinCfile = path + '/' + "mappackfile.c";
+    QFile binCfile(GenerateBinCfile);
+    binCfile.open(QFile::WriteOnly);
+    binCfile.write(binCfilestr.toLatin1());
+    binCfile.close();
+
 }
