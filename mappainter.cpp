@@ -114,6 +114,8 @@ int MapPainter::deletemap(mappack_t* map)
     return 0;
 }
 
+#define MAPGENERATER
+
 void MapPainter::on_Bn_Generated_pressed()
 {
     QString path = QFileDialog::getExistingDirectory(this,
@@ -121,12 +123,6 @@ void MapPainter::on_Bn_Generated_pressed()
                                                     "./");
     if(path.isEmpty()) return;
 
-
-    QStringList imageList = QFileDialog::getOpenFileNames(this,
-                                                          "Open",
-                                                          "./",
-                                                          "image(*.png)");
-    /*
     if( _mapptr == nullptr ) return;
     QString filestr;
 
@@ -136,7 +132,7 @@ void MapPainter::on_Bn_Generated_pressed()
     //filestr.append(_mapptr->name + "_maplayer2,\n");
     //filestr.append("}\n");
 
-
+#ifdef MAPGENERATER
     uint16_t **mapptr[3];
     mapptr[0] = _mapptr->maplayer0;
     mapptr[1] = _mapptr->maplayer1;
@@ -169,7 +165,14 @@ void MapPainter::on_Bn_Generated_pressed()
     file.close();
 
     //_mapptr->size_h
-    */
+#endif
+
+#ifdef Generater
+
+    QStringList imageList = QFileDialog::getOpenFileNames(this,
+                                                          "Open",
+                                                          "./",
+                                                          "image(*.png)");
 
 
     if( imageList.isEmpty()) return;
@@ -228,18 +231,26 @@ void MapPainter::on_Bn_Generated_pressed()
                 binfile.append("{ // -- \n");
                 for(int i = 0; i < 576; i++ )
                 {
-                   quint16 color = quint16(TORGB565(img->pixelColor(posx * 24 + i % 24, posy * 24 + i / 24).rgb()));
-
-                   if( colorUserBuff[color] == 0 )
+                   QColor colorpix = img->pixelColor(posx * 24 + i % 24, posy * 24 + i / 24);
+                   if( colorpix.alpha() == 255 )
                    {
-                       colorUserBuff[color] = ( index + 1 );
-                       colorIndexbuff[index] = color;
-                       colorindex = index;
-                       index++;
+                       quint16 color = quint16(TORGB565(colorpix.rgb()));
+
+                       if( colorUserBuff[color] == 0 )
+                       {
+                           colorUserBuff[color] = ( index + 1 );
+                           colorIndexbuff[index] = color;
+                           colorindex = index;
+                           index++;
+                       }
+                       else
+                       {
+                           colorindex = quint8(colorUserBuff[color] - 1);
+                       }
                    }
                    else
                    {
-                       colorindex = quint8(colorUserBuff[color] - 1);
+                       colorindex = 255;
                    }
 
                    binfiledata.append(char(colorindex));
@@ -321,5 +332,5 @@ void MapPainter::on_Bn_Generated_pressed()
     binCfile.open(QFile::WriteOnly);
     binCfile.write(binCfilestr.toLatin1());
     binCfile.close();
-
+#endif
 }

@@ -52,8 +52,10 @@ void mapPainterWidget::setPainterImage(QImage image,QRect r)
 void mapPainterWidget::setPainterImage(int number,QRect r)
 {
     _mapImage.load(_mapList.at(number));
+    _mapnumber = number;
     _Rect = QRect(r.x(),r.y(),qAbs(r.width()),qAbs(r.height()));
-    _Image = _mapImage.copy(r);
+    qDebug()<<_Rect;
+    _Image = _mapImage.copy(_Rect);
 }
 
 void mapPainterWidget::setmapLayer(int layer)
@@ -72,6 +74,7 @@ void mapPainterWidget::setmapLayer(int layer)
 
 QImage mapPainterWidget::reSetImageOffset(int offsetX,int offsetY)
 {
+
     QImage image(_Rect.width(),_Rect.height(),_Image.format());
     offsetX = ( offsetX < 0 ) ? ( _Rect.width() - qAbs(offsetX) % _Rect.width()) : offsetX % _Rect.width();
     offsetY = ( offsetY < 0 ) ? ( _Rect.height() - qAbs(offsetY) % _Rect.height()) : offsetY % _Rect.height();
@@ -80,8 +83,8 @@ QImage mapPainterWidget::reSetImageOffset(int offsetX,int offsetY)
     {
         for(int x = 0; x < _Rect.width(); x++ )
         {
-            image.setPixel(x,y,_Image.pixel(( offsetX + x ) % _Rect.width(),
-                                            ( offsetY + y ) % _Rect.height()));
+            image.setPixelColor(x,y,_Image.pixelColor(( offsetX + x ) % _Rect.width(),
+                                                 ( offsetY + y ) % _Rect.height()));
         }
     }
     return image;
@@ -184,20 +187,28 @@ void mapPainterWidget::mouseMoveEvent(QMouseEvent* e)
         if(( qAbs( mousePos.x() - _drawPoint.x()) >= 24 )||\
            ( qAbs( mousePos.y() - _drawPoint.y()) >= 24 ))
         {
+            //qDebug()<<"Layer:"<<_mapLayer;
             QPainter painter(&pixmap[_mapLayer]);
             int rectx0 = mousePos.x()  - mousePos.x() % 24;
             int recty0 = mousePos.y()  - mousePos.y() % 24;
+
+
+
             painter.drawImage(rectx0,
                               recty0,
                               reSetImageOffset(rectx0 - _pressPoint.x(),
                                                recty0 - _pressPoint.y()));
 
+
+            //qDebug()<<__FILE__<<__LINE__;
             writemapData(rectx0,
                          recty0,
                          rectx0 - _pressPoint.x(),
                          recty0 - _pressPoint.y());
+            //qDebug()<<__FILE__<<__LINE__;
 
             _drawPoint = mousePos;
+            //qDebug()<<__FILE__<<__LINE__;
 
             this->update();
         }
