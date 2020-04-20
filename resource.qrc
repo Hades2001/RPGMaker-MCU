@@ -4,5 +4,13 @@
         <file>img/layers_0001.png</file>
         <file>img/layers_0002.png</file>
         <file>img/Browse.png</file>
+        <file>img/Erase.png</file>
+        <file>img/fill.png</file>
+        <file>img/pen.png</file>
+        <file>img/brush.png</file>
+        <file>img/choise.png</file>
+        <file>img/zoom-.png</file>
+        <file>img/zoom+.png</file>
+        <file>img/Generater.png</file>
     </qresource>
 </RCC>
